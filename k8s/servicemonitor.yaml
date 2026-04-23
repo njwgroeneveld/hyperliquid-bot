@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hyperliquid-bot
+  namespace: trading
+  labels:
+    app: hyperliquid-bot
+spec:
+  selector:
+    matchLabels:
+      app: hyperliquid-bot
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

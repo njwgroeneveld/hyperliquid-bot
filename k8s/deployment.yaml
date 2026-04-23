@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hyperliquid-bot
+  namespace: trading
+  labels:
+    app: hyperliquid-bot
+spec:
+  selector:
+    app: hyperliquid-bot
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hyperliquid-bot
+  namespace: trading
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hyperliquid-bot
+  template:
+    metadata:
+      labels:
+        app: hyperliquid-bot
+    spec:
+      containers:
+        - name: bot
+          image: your-registry/hyperliquid-bot:latest
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8080
+              name: metrics
+          env:
+            - name: HYPERLIQUID_TESTNET
+              value: "true"
+            - name: LOG_DIR
+              value: "/data/logs"
+            - name: DATABASE_PATH
+              value: "/data/bot.db"
+            - name: METRICS_PORT
+              value: "8080"
+            - name: HYPERLIQUID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hyperliquid-secrets
+                  key: private_key
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hyperliquid-secrets
+                  key: anthropic_api_key
+                  optional: true
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hyperliquid-secrets
+                  key: telegram_bot_token
+                  optional: true
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hyperliquid-secrets
+                  key: telegram_chat_id
+                  optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /app/config
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            failureThreshold: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hyperliquid-bot-pvc
+        - name: config
+          configMap:
+            name: hyperliquid-bot-config

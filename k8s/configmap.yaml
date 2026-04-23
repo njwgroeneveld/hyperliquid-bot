@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hyperliquid-bot-config
+  namespace: trading
+data:
+  settings.yaml: |
+    strategy:
+      swing_n: 3
+      swing_lookback: 3
+      equal_tolerance: 0.0015
+      impulse_min_body_pct: 0.60
+      impulse_min_move_pct: 0.003
+      impulse_volume_multiplier: 1.5
+      zone_proximity_pct: 0.02
+      momentum_strong_body_pct: 0.60
+      momentum_weak_body_pct: 0.30
+      order_wall_threshold_btc: 200
+      order_wall_buckets: 0.001
+
+    risk:
+      risk_per_trade: 0.01
+      max_leverage: 2
+      max_positions: 5
+      max_correlated_positions: 3
+      min_risk_reward: 2.0
+      stop_buffer_pct: 0.001
+      atr_period: 14
+      atr_stop_multiplier: 1.5
+      max_trade_duration_hours: 24
+      avg_trade_duration_hours: 12
+      daily_loss_alert_pct: 0.10
+      weekly_loss_alert_pct: 0.25
+
+    timeframes:
+      trend: "4h"
+      entry: "1h"
+      candle_lookback: 200
+
+    session_hours_utc:
+      london_open: 8
+      london_close: 12
+      ny_open: 13
+      ny_close: 17
+
+    logging:
+      log_dir: "logs"
+      database_path: "database/bot.db"
+
+  coins.yaml: |
+    active_coins:
+      - symbol: BTC
+        min_daily_volume_usd: 50000000
+        active: true
+      - symbol: ETH
+        min_daily_volume_usd: 50000000
+        active: true
+      - symbol: SOL
+        min_daily_volume_usd: 50000000
+        active: true
