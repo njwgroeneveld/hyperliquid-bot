@@ -39,12 +39,14 @@ from src.alerts import telegram_alert as telegram
 from src.metrics import prometheus_metrics as metrics
 
 
+_log_dir = os.getenv("LOG_DIR", "logs")
+Path(_log_dir).mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("logs/bot.log", encoding="utf-8"),
+        logging.FileHandler(f"{_log_dir}/bot.log", encoding="utf-8"),
     ],
 )
 log = logging.getLogger(__name__)
