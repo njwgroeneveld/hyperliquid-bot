@@ -13,6 +13,9 @@ import sys
 import time
 import threading
 from datetime import datetime, timezone
+
+from dotenv import load_dotenv
+load_dotenv()
 from pathlib import Path
 
 import yaml
@@ -46,7 +49,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-PAPER_PORTFOLIO_USD = 10_000
+PAPER_PORTFOLIO_USD = 1_000
 CORRELATED_GROUP = {"BTC", "ETH", "SOL"}
 
 
@@ -152,7 +155,8 @@ class AnalysisLoop:
             richting = beslissing.get("richting")
             prijs = detection["huidige_prijs"]
 
-            metrics.decision_score.labels(coin=coin).set(score)
+            score_float = float(str(score).split("/")[0]) if "/" in str(score) else float(score)
+            metrics.decision_score.labels(coin=coin).set(score_float)
 
             log.info(
                 f"[{coin}] Score {score} | Beslissing: {beslissing['beslissing']} | "
