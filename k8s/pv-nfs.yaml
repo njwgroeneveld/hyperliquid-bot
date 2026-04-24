@@ -8,7 +8,7 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: 192.168.1.100   # ← vervang met IP van je Pi A (NFS server)
+    server: 192.168.178.137   # ← vervang met IP van je Pi A (NFS server)
     path: /data/hyperliquid-bot
   persistentVolumeReclaimPolicy: Retain
   mountOptions:
