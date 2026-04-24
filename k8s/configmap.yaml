@@ -58,3 +58,9 @@ data:
       - symbol: SOL
         min_daily_volume_usd: 50000000
         active: true
+      - symbol: HYPE
+        min_daily_volume_usd: 20000000
+        active: true
+      - symbol: TAO
+        min_daily_volume_usd: 2000000
+        active: true
