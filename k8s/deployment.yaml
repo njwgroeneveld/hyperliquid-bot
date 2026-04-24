@@ -29,6 +29,8 @@ spec:
       labels:
         app: hyperliquid-bot
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: niels-desktop
       containers:
         - name: bot
           image: ghcr.io/njwgroeneveld/hyperliquid-bot:latest
