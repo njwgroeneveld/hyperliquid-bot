@@ -344,6 +344,115 @@
           "legendFormat": "{{type}}"
         }
       ]
+    },
+    {
+      "id": 17,
+      "title": "Resources",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
+      "collapsed": false
+    },
+    {
+      "id": 18,
+      "title": "CPU gebruik",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 35 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"trading\", container=\"bot\"}[5m])",
+          "legendFormat": "CPU"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Memory gebruik",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 35 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "container_memory_working_set_bytes{namespace=\"trading\", container=\"bot\"}",
+          "legendFormat": "Memory"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "CPU huidig",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 4, "x": 0, "y": 42 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.3 },
+              { "color": "red", "value": 0.8 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"trading\", container=\"bot\"}[5m])",
+          "legendFormat": "CPU"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Memory huidig",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 4, "x": 4, "y": 42 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 400000000 },
+              { "color": "red", "value": 500000000 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "container_memory_working_set_bytes{namespace=\"trading\", container=\"bot\"}",
+          "legendFormat": "Memory"
+        }
+      ]
     }
   ],
   "time": { "from": "now-6h", "to": "now" },
