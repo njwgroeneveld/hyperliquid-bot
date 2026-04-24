@@ -5,7 +5,9 @@ metadata:
   namespace: trading
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 1Gi
+  volumeName: hyperliquid-bot-pv
+  storageClassName: ""

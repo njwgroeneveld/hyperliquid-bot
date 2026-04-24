@@ -1,0 +1,10 @@
+active_coins:
+  - symbol: BTC
+    min_daily_volume_usd: 50000000
+    active: true
+  - symbol: ETH
+    min_daily_volume_usd: 50000000
+    active: true
+  - symbol: SOL
+    min_daily_volume_usd: 50000000
+    active: true

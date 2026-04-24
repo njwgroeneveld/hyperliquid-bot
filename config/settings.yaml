@@ -1,0 +1,41 @@
+strategy:
+  swing_n: 3                    # candles links/rechts voor swing high/low detectie
+  swing_lookback: 3             # hoeveel recente swings gebruiken voor trend (niet alle)
+  equal_tolerance: 0.0015       # 0.15% tolerantie voor equal highs/lows
+  impulse_min_body_pct: 0.60    # minimale body/range ratio voor impuls candle
+  impulse_min_move_pct: 0.003   # minimale prijsbeweging voor impuls (0.3%)
+  impulse_volume_multiplier: 1.5 # volume moet X keer boven 20-periode gemiddelde zijn
+  zone_proximity_pct: 0.02      # max afstand van zone voor "nadert" status (2%)
+  momentum_strong_body_pct: 0.60
+  momentum_weak_body_pct: 0.30
+  order_wall_threshold_btc: 200  # minimum BTC equivalent voor order wall
+  order_wall_buckets: 0.001      # 0.1% bucket grootte voor orderbook aggregatie
+
+risk:
+  risk_per_trade: 0.01           # 1% van portfolio per trade
+  max_leverage: 2
+  max_positions: 5               # paper trading
+  max_correlated_positions: 3    # testnet: alle 3 toegestaan; zet op 1 bij live trading
+  min_risk_reward: 2.0           # minimum 2R voor entry (na aftrek funding kosten)
+  stop_buffer_pct: 0.001         # fallback stop buffer als ATR niet beschikbaar is
+  atr_period: 14                 # ATR periode voor dynamische stop berekening
+  atr_stop_multiplier: 1.5       # stop = zone_rand ± (ATR × multiplier)
+  max_trade_duration_hours: 24
+  avg_trade_duration_hours: 12   # schatting voor funding-kostenberekening
+  daily_loss_alert_pct: 0.10     # -10% alert (paper: alleen alert, geen stop)
+  weekly_loss_alert_pct: 0.25
+
+timeframes:
+  trend: "4h"
+  entry: "1h"
+  candle_lookback: 200           # hoeveel candles ophalen voor analyse
+
+session_hours_utc:
+  london_open: 8
+  london_close: 12
+  ny_open: 13
+  ny_close: 17
+
+logging:
+  log_dir: "logs"
+  database_path: "database/bot.db"

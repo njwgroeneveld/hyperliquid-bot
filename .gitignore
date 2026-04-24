@@ -1,0 +1,27 @@
+# Secrets — nooit in git
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Bot data — lokale runtime bestanden
+logs/
+database/
+*.db
+*.db-shm
+*.db-wal
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Tijdelijk script
+walCrea.py

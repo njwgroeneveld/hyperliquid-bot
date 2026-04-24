@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: bot
-          image: your-registry/hyperliquid-bot:latest
+          image: ghcr.io/njwgroeneveld/hyperliquid-bot:latest
           resources:
             requests:
               memory: "256Mi"
