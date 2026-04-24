@@ -1,0 +1,351 @@
+{
+  "title": "Hyperliquid Bot",
+  "uid": "hyperliquid-bot",
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["trading", "hyperliquid"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Bot Status",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Laatste analyse",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "unit": "s"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 3900 },
+              { "color": "red", "value": 7200 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "time() - bot_last_successful_run_timestamp{loop=\"analysis\"}",
+          "legendFormat": "geleden"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Opeenvolgende fouten",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 6, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 3 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "bot_consecutive_errors",
+          "legendFormat": "fouten"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Analyses afgelopen 24u",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 10, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "none",
+        "graphMode": "none"
+      },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        {
+          "expr": "sum(increase(bot_analysis_runs_total[24h]))",
+          "legendFormat": "runs"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Fouten afgelopen uur",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 14, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(bot_errors_total[1h]))",
+          "legendFormat": "fouten"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Trading",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "title": "Beslissingscore per coin",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 7,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "green", "value": 6 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "bot_decision_score",
+          "legendFormat": "{{coin}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Trend status",
+      "type": "table",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 6 },
+      "options": { "sortBy": [{ "displayName": "coin" }] },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "1": { "text": "UPTREND", "color": "green" } } },
+                  { "type": "value", "options": { "-1": { "text": "DOWNTREND", "color": "red" } } },
+                  { "type": "value", "options": { "0": { "text": "CONSOLIDATIE", "color": "yellow" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "bot_trend_status",
+          "legendFormat": "{{coin}}",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        { "id": "labelsToFields", "options": { "valueLabel": "coin" } },
+        { "id": "organize", "options": { "renameByName": { "Value": "Trend" } } }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Open posities",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 6 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "bot_open_positions",
+          "legendFormat": "{{coin}} {{direction}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Supply & Demand zones",
+      "type": "bargauge",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 10 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "basic"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "bot_zones_found",
+          "legendFormat": "{{coin}} {{type}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Markt & Funding",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "collapsed": false
+    },
+    {
+      "id": 12,
+      "title": "Funding rate per coin",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 15 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "bot_funding_rate",
+          "legendFormat": "{{coin}}"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Performance",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "title": "Loop duur (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 23 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 1 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(bot_loop_duration_seconds_bucket[5m]))",
+          "legendFormat": "{{loop}} p95"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Analyse loop duur",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 23 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "none",
+        "graphMode": "area"
+      },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(bot_loop_duration_seconds_bucket{loop=\"analysis\"}[10m]))",
+          "legendFormat": "p50"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Fouten per type",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 27 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "increase(bot_errors_total[5m])",
+          "legendFormat": "{{type}}"
+        }
+      ]
+    }
+  ],
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {}
+}
