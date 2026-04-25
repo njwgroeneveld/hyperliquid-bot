@@ -63,11 +63,31 @@ fi
 # -----------------------------------------------------------------------------
 echo ""
 echo "📦 Stap 3: Paperclip installeren..."
-if [ -f "$HOME/.paperclip/instances/default/config.json" ]; then
+CONFIG_FILE="$HOME/.paperclip/instances/default/config.json"
+
+if [ -f "$CONFIG_FILE" ]; then
   log "Paperclip al geconfigureerd"
 else
-  npx paperclipai onboard --yes
-  log "Paperclip geinstalleerd"
+  echo "Paperclip onboarding uitvoeren (achtergrond)..."
+  # onboard --yes start ook de server, dus we draaien het in achtergrond
+  # en stoppen zodra de config aangemaakt is
+  npx paperclipai onboard --yes &
+  ONBOARD_PID=$!
+
+  echo "Wachten tot config aangemaakt is..."
+  for i in {1..30}; do
+    if [ -f "$CONFIG_FILE" ]; then
+      sleep 3  # even wachten zodat config volledig geschreven is
+      kill $ONBOARD_PID 2>/dev/null || true
+      wait $ONBOARD_PID 2>/dev/null || true
+      log "Paperclip geconfigureerd"
+      break
+    fi
+    if [ $i -eq 30 ]; then
+      err "Paperclip configuratie niet gevonden na 60 seconden"
+    fi
+    sleep 2
+  done
 fi
 
 # -----------------------------------------------------------------------------
@@ -75,7 +95,6 @@ fi
 # -----------------------------------------------------------------------------
 echo ""
 echo "🔑 Stap 4: Anthropic API key configureren..."
-CONFIG_FILE="$HOME/.paperclip/instances/default/config.json"
 
 if grep -q '"llm"' "$CONFIG_FILE"; then
   log "LLM provider al geconfigureerd"
