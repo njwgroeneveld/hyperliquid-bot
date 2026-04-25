@@ -120,17 +120,8 @@ EOF
   log "API key geconfigureerd"
 fi
 
-# -----------------------------------------------------------------------------
-# Stap 4b: Server bereikbaar op lokaal netwerk
-# -----------------------------------------------------------------------------
-echo ""
-echo "🌐 Stap 4b: Server op lan instellen..."
-if grep -q '"bind": "lan"' "$CONFIG_FILE"; then
-  log "Al ingesteld op lan"
-else
-  sed -i 's/"bind": "loopback"/"bind": "lan"/' "$CONFIG_FILE"
-  log "Server ingesteld op lan"
-fi
+# Stap 4b: bind blijft op loopback (vereist door local_trusted mode)
+# Toegang vanuit Windows via SSH tunnel: ssh -L 3100:localhost:3100 pi@<pi-ip>
 
 # -----------------------------------------------------------------------------
 # Stap 5: risk-thresholds.json neerzetten
