@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from typing import Optional
 
 
@@ -8,10 +10,12 @@ HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info"
 class HyperliquidClient:
     """Low-level client for the Hyperliquid REST API."""
 
-    def __init__(self, timeout: int = 10):
+    def __init__(self, timeout: int = 30):
         self.url = HYPERLIQUID_API_URL
-        self.session = requests.Session()
         self.timeout = timeout
+        self.session = requests.Session()
+        retry = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        self.session.mount("https://", HTTPAdapter(max_retries=retry))
 
     def _post(self, payload: dict) -> dict | list:
         response = self.session.post(self.url, json=payload, timeout=self.timeout)
