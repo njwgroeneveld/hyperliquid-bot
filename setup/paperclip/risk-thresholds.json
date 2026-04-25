@@ -1,0 +1,23 @@
+{
+  "_comment": "ALLEEN NIELS MAG DEZE WAARDEN AANPASSEN",
+  "version": "1.0",
+  "updated": "2026-04-25",
+  "noodrem": {
+    "min_win_rate_pct": 45,
+    "min_win_rate_over_last_n_trades": 20,
+    "max_consecutive_losses": 5,
+    "max_daily_loss_pct": 15,
+    "max_weekly_loss_pct": 25
+  },
+  "acceptatiecriteria": {
+    "min_win_rate_pct": 50,
+    "min_avg_r": 1.5,
+    "moet_beter_zijn_dan_vorige_versie": true
+  },
+  "risico_per_trade": {
+    "max_positie_pct_portfolio": 5,
+    "max_leverage": 2,
+    "max_open_posities": 5
+  },
+  "trading_modus": "testnet"
+}
