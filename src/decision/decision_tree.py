@@ -44,6 +44,24 @@ def _stap_1_trend(detection: dict) -> dict:
             "bewijs": struct_4h.get("trend_reasoning", ""),
             "veto": False,
         }
+    elif trend == "ZWAKKE_UPTREND":
+        return {
+            "stap": 1, "naam": "Trendrichting (4H)",
+            "resultaat": RESULTAAT_GEEL,
+            "richting": "LONG",
+            "waarde": trend,
+            "bewijs": f"Zwakke opwaartse trend — gedeeltelijke structuurbevestiging: {struct_4h.get('trend_reasoning', '')}",
+            "veto": False,
+        }
+    elif trend == "ZWAKKE_DOWNTREND":
+        return {
+            "stap": 1, "naam": "Trendrichting (4H)",
+            "resultaat": RESULTAAT_GEEL,
+            "richting": "SHORT",
+            "waarde": trend,
+            "bewijs": f"Zwakke neerwaartse trend — gedeeltelijke structuurbevestiging: {struct_4h.get('trend_reasoning', '')}",
+            "veto": False,
+        }
     else:
         return {
             "stap": 1, "naam": "Trendrichting (4H)",
@@ -86,7 +104,21 @@ def _stap_2_zone(detection: dict, richting: str, proximity_pct: float = 0.02) ->
     zone_midden = beste_zone["midden"]
     afstand_pct = abs(prijs - zone_midden) / prijs
 
+    zone_type = beste_zone.get("type", "?")
+
     if afstand_pct <= proximity_pct:
+        if zone_type == "ZWAKKE":
+            return {
+                "stap": 2, "naam": "Supply/Demand zone",
+                "resultaat": RESULTAAT_GEEL,
+                "zone": beste_zone,
+                "bewijs": (
+                    f"{'Demand' if richting == 'LONG' else 'Supply'} zone gevonden (ZWAKKE — geen imbalance): "
+                    f"${beste_zone['laag']:,.0f}–${beste_zone['hoog']:,.0f}, "
+                    f"afstand {afstand_pct*100:.1f}% van huidige prijs"
+                ),
+                "veto": False,
+            }
         return {
             "stap": 2, "naam": "Supply/Demand zone",
             "resultaat": RESULTAAT_GROEN,
@@ -94,7 +126,7 @@ def _stap_2_zone(detection: dict, richting: str, proximity_pct: float = 0.02) ->
             "bewijs": (
                 f"{'Demand' if richting == 'LONG' else 'Supply'} zone gevonden: "
                 f"${beste_zone['laag']:,.0f}–${beste_zone['hoog']:,.0f} "
-                f"({beste_zone.get('type', '?')}), "
+                f"({zone_type}), "
                 f"afstand {afstand_pct*100:.1f}% van huidige prijs"
             ),
             "veto": False,
@@ -105,7 +137,7 @@ def _stap_2_zone(detection: dict, richting: str, proximity_pct: float = 0.02) ->
             "resultaat": RESULTAAT_GEEL,
             "zone": beste_zone,
             "bewijs": (
-                f"Zone gevonden maar prijs nog {afstand_pct*100:.1f}% verwijderd "
+                f"Zone gevonden ({zone_type}) maar prijs nog {afstand_pct*100:.1f}% verwijderd "
                 f"(max {proximity_pct*100:.0f}%) — wachten"
             ),
             "veto": False,

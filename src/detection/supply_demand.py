@@ -123,75 +123,98 @@ def detect(
     if df.empty or len(df) < 4:
         return {"timeframe": timeframe, "demand_zones": [], "supply_zones": []}
 
-    demand_zones = []
-    supply_zones = []
+    demand_met_imb = []
+    demand_zonder_imb = []
+    supply_met_imb = []
+    supply_zonder_imb = []
     current_price = float(df["close"].iloc[-1])
 
     for i in range(1, len(df) - 2):
         if _is_impulse_candle(df, i, "BULLISH", min_body_pct, min_move_pct, volume_multiplier):
-            if _has_imbalance_after(df, i):
-                zone_candle = df.iloc[i - 1]
-                zone_low = float(min(zone_candle["open"], zone_candle["close"]))
-                zone_high = float(max(zone_candle["open"], zone_candle["close"]))
-                zone_low = min(zone_low, float(zone_candle["low"]))
+            has_imb = _has_imbalance_after(df, i)
+            zone_candle = df.iloc[i - 1]
+            zone_low = float(min(zone_candle["open"], zone_candle["close"]))
+            zone_high = float(max(zone_candle["open"], zone_candle["close"]))
+            zone_low = min(zone_low, float(zone_candle["low"]))
 
-                geraakt, doorbroken, touch_count = _zone_status(df, i - 1, zone_low, zone_high, "DEMAND")
+            geraakt, doorbroken, touch_count = _zone_status(df, i - 1, zone_low, zone_high, "DEMAND")
 
-                demand_zones.append({
-                    "id": f"DZ-{timeframe}-{i:04d}",
-                    "timeframe": timeframe,
-                    "laag": round(zone_low, 4),
-                    "hoog": round(zone_high, 4),
-                    "midden": round((zone_low + zone_high) / 2, 4),
-                    "imbalance": True,
-                    "geraakt": geraakt,
-                    "touch_count": touch_count,
-                    "doorbroken": doorbroken,
-                    "geldig": not doorbroken,  # geldig totdat candle door zone sluit
-                    "afstand_pct": round(abs(current_price - (zone_low + zone_high) / 2) / current_price * 100, 2),
-                    "gevormd_op": str(df["timestamp"].iloc[i - 1]),
-                    "impulse_candle_index": i,
-                })
+            zone = {
+                "id": f"DZ-{timeframe}-{i:04d}",
+                "timeframe": timeframe,
+                "laag": round(zone_low, 4),
+                "hoog": round(zone_high, 4),
+                "midden": round((zone_low + zone_high) / 2, 4),
+                "imbalance": has_imb,
+                "geraakt": geraakt,
+                "touch_count": touch_count,
+                "doorbroken": doorbroken,
+                "geldig": not doorbroken,
+                "afstand_pct": round(abs(current_price - (zone_low + zone_high) / 2) / current_price * 100, 2),
+                "gevormd_op": str(df["timestamp"].iloc[i - 1]),
+                "impulse_candle_index": i,
+            }
+            if has_imb:
+                demand_met_imb.append(zone)
+            else:
+                demand_zonder_imb.append(zone)
 
         elif _is_impulse_candle(df, i, "BEARISH", min_body_pct, min_move_pct, volume_multiplier):
-            if _has_imbalance_after(df, i):
-                zone_candle = df.iloc[i - 1]
-                zone_low = float(min(zone_candle["open"], zone_candle["close"]))
-                zone_high = float(max(zone_candle["open"], zone_candle["close"]))
-                zone_high = max(zone_high, float(zone_candle["high"]))
+            has_imb = _has_imbalance_after(df, i)
+            zone_candle = df.iloc[i - 1]
+            zone_low = float(min(zone_candle["open"], zone_candle["close"]))
+            zone_high = float(max(zone_candle["open"], zone_candle["close"]))
+            zone_high = max(zone_high, float(zone_candle["high"]))
 
-                geraakt, doorbroken, touch_count = _zone_status(df, i - 1, zone_low, zone_high, "SUPPLY")
+            geraakt, doorbroken, touch_count = _zone_status(df, i - 1, zone_low, zone_high, "SUPPLY")
 
-                supply_zones.append({
-                    "id": f"SZ-{timeframe}-{i:04d}",
-                    "timeframe": timeframe,
-                    "laag": round(zone_low, 4),
-                    "hoog": round(zone_high, 4),
-                    "midden": round((zone_low + zone_high) / 2, 4),
-                    "imbalance": True,
-                    "geraakt": geraakt,
-                    "touch_count": touch_count,
-                    "doorbroken": doorbroken,
-                    "geldig": not doorbroken,
-                    "afstand_pct": round(abs(current_price - (zone_low + zone_high) / 2) / current_price * 100, 2),
-                    "gevormd_op": str(df["timestamp"].iloc[i - 1]),
-                    "impulse_candle_index": i,
-                })
+            zone = {
+                "id": f"SZ-{timeframe}-{i:04d}",
+                "timeframe": timeframe,
+                "laag": round(zone_low, 4),
+                "hoog": round(zone_high, 4),
+                "midden": round((zone_low + zone_high) / 2, 4),
+                "imbalance": has_imb,
+                "geraakt": geraakt,
+                "touch_count": touch_count,
+                "doorbroken": doorbroken,
+                "geldig": not doorbroken,
+                "afstand_pct": round(abs(current_price - (zone_low + zone_high) / 2) / current_price * 100, 2),
+                "gevormd_op": str(df["timestamp"].iloc[i - 1]),
+                "impulse_candle_index": i,
+            }
+            if has_imb:
+                supply_met_imb.append(zone)
+            else:
+                supply_zonder_imb.append(zone)
 
-    # Classify valid zones as EXTREME (furthest from price) or MIDDEL
-    valid_demand = [z for z in demand_zones if z["geldig"]]
-    valid_supply = [z for z in supply_zones if z["geldig"]]
+    # Zones mét imbalance krijgen EXTREME/MIDDEL classificatie
+    valid_demand_reg = [z for z in demand_met_imb if z["geldig"]]
+    valid_supply_reg = [z for z in supply_met_imb if z["geldig"]]
+    _classify_zone_type(valid_demand_reg, current_price, "DEMAND")
+    _classify_zone_type(valid_supply_reg, current_price, "SUPPLY")
 
-    _classify_zone_type(valid_demand, current_price, "DEMAND")
-    _classify_zone_type(valid_supply, current_price, "SUPPLY")
+    # ZWAKKE zones (zonder imbalance) alleen als fallback wanneer geen reguliere zones bestaan
+    valid_demand_zwak = [z for z in demand_zonder_imb if z["geldig"]]
+    valid_supply_zwak = [z for z in supply_zonder_imb if z["geldig"]]
+    for z in valid_demand_zwak:
+        z["type"] = "ZWAKKE"
+    for z in valid_supply_zwak:
+        z["type"] = "ZWAKKE"
+
+    valid_demand = valid_demand_reg if valid_demand_reg else valid_demand_zwak
+    valid_supply = valid_supply_reg if valid_supply_reg else valid_supply_zwak
+
+    alle_demand = demand_met_imb + demand_zonder_imb
+    alle_supply = supply_met_imb + supply_zonder_imb
 
     return {
         "timeframe": timeframe,
         "huidige_prijs": current_price,
         "demand_zones": valid_demand,
         "supply_zones": valid_supply,
-        "alle_demand_zones": demand_zones,
-        "alle_supply_zones": supply_zones,
+        "alle_demand_zones": alle_demand,
+        "alle_supply_zones": alle_supply,
         "totaal_geldige_demand": len(valid_demand),
         "totaal_geldige_supply": len(valid_supply),
     }

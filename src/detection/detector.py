@@ -15,6 +15,7 @@ class Detector:
         self.equal_tolerance = settings["strategy"]["equal_tolerance"]
         self.impulse_min_body_pct = settings["strategy"]["impulse_min_body_pct"]
         self.impulse_min_move_pct = settings["strategy"]["impulse_min_move_pct"]
+        self.impulse_volume_multiplier = settings["strategy"]["impulse_volume_multiplier"]
 
     def run(
         self,
@@ -38,6 +39,7 @@ class Detector:
             df_4h, "4H",
             min_body_pct=self.impulse_min_body_pct,
             min_move_pct=self.impulse_min_move_pct,
+            volume_multiplier=self.impulse_volume_multiplier,
         )
         imbalances_4h = imbalance.detect(df_4h, "4H")
 
@@ -56,6 +58,7 @@ class Detector:
             df_1h, "1H",
             min_body_pct=self.impulse_min_body_pct,
             min_move_pct=self.impulse_min_move_pct,
+            volume_multiplier=self.impulse_volume_multiplier,
         )
         imbalances_1h = imbalance.detect(df_1h, "1H")
 

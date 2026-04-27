@@ -47,12 +47,13 @@ def find_swing_lows(df: pd.DataFrame, n: int = 3) -> list[dict]:
 
 def classify_trend(swing_highs: list[dict], swing_lows: list[dict], lookback: int = 3) -> dict:
     """
-    Uptrend:    de laatste `lookback` swing highs zijn stijgend EN lows zijn stijgend
-    Downtrend:  de laatste `lookback` swing highs zijn dalend EN lows zijn dalend
-    Consolidatie: gemengd of te weinig swings
+    Classificeert trend op basis van de laatste `lookback` swing highs en lows.
 
-    Gebruikt alleen de LAATSTE `lookback` swings — niet alle 20+.
-    Dit voorkomt dat één kleine correctie in een sterke trend de classificatie breekt.
+    UPTREND:           alle paren stijgen in zowel highs als lows
+    DOWNTREND:         alle paren dalen in zowel highs als lows
+    ZWAKKE_UPTREND:    meerderheid paren stijgt in highs én lows (≥3 swings nodig)
+    ZWAKKE_DOWNTREND:  meerderheid paren daalt in highs én lows (≥3 swings nodig)
+    CONSOLIDATIE:      gemengd of te weinig swings
     """
     result = {
         "trend": "CONSOLIDATIE",
@@ -67,31 +68,33 @@ def classify_trend(swing_highs: list[dict], swing_lows: list[dict], lookback: in
         result["reasoning"] = "Onvoldoende swings voor trendclassificatie"
         return result
 
-    # Gebruik alleen de meest recente swings
     recent_highs = swing_highs[-lookback:]
     recent_lows = swing_lows[-lookback:]
 
-    highs_ascending = all(
-        recent_highs[i]["price"] > recent_highs[i - 1]["price"]
-        for i in range(1, len(recent_highs))
+    n_pairs_h = len(recent_highs) - 1
+    n_pairs_l = len(recent_lows) - 1
+
+    bullish_h = sum(
+        1 for i in range(1, len(recent_highs))
+        if recent_highs[i]["price"] > recent_highs[i - 1]["price"]
     )
-    lows_ascending = all(
-        recent_lows[i]["price"] > recent_lows[i - 1]["price"]
-        for i in range(1, len(recent_lows))
+    bullish_l = sum(
+        1 for i in range(1, len(recent_lows))
+        if recent_lows[i]["price"] > recent_lows[i - 1]["price"]
     )
-    highs_descending = all(
-        recent_highs[i]["price"] < recent_highs[i - 1]["price"]
-        for i in range(1, len(recent_highs))
+    bearish_h = sum(
+        1 for i in range(1, len(recent_highs))
+        if recent_highs[i]["price"] < recent_highs[i - 1]["price"]
     )
-    lows_descending = all(
-        recent_lows[i]["price"] < recent_lows[i - 1]["price"]
-        for i in range(1, len(recent_lows))
+    bearish_l = sum(
+        1 for i in range(1, len(recent_lows))
+        if recent_lows[i]["price"] < recent_lows[i - 1]["price"]
     )
 
     last_hh = recent_highs[-1]
     last_hl = recent_lows[-1]
 
-    if highs_ascending and lows_ascending:
+    if bullish_h == n_pairs_h and bullish_l == n_pairs_l:
         result["trend"] = "UPTREND"
         result["last_hh"] = last_hh
         result["last_hl"] = last_hl
@@ -100,7 +103,7 @@ def classify_trend(swing_highs: list[dict], swing_lows: list[dict], lookback: in
             f"HL ${last_hl['price']:,.0f} > vorige HL ${recent_lows[-2]['price']:,.0f} "
             f"(laatste {len(recent_highs)} highs, {len(recent_lows)} lows)"
         )
-    elif highs_descending and lows_descending:
+    elif bearish_h == n_pairs_h and bearish_l == n_pairs_l:
         result["trend"] = "DOWNTREND"
         result["last_ll"] = last_hl
         result["last_lh"] = last_hh
@@ -109,6 +112,27 @@ def classify_trend(swing_highs: list[dict], swing_lows: list[dict], lookback: in
             f"LH ${last_hh['price']:,.0f} < vorige LH ${recent_highs[-2]['price']:,.0f} "
             f"(laatste {len(recent_highs)} highs, {len(recent_lows)} lows)"
         )
+    elif n_pairs_h >= 2 and n_pairs_l >= 2:
+        # Combineer scores over beide dimensies om de zwakke richting te bepalen.
+        # Vereist meerderheid over highs + lows samen, én minstens 1 bevestigend paar per dimensie.
+        bullish_score = bullish_h + bullish_l
+        bearish_score = bearish_h + bearish_l
+        if bullish_score > bearish_score and bullish_h >= 1 and bullish_l >= 1:
+            result["trend"] = "ZWAKKE_UPTREND"
+            result["last_hh"] = last_hh
+            result["last_hl"] = last_hl
+            result["reasoning"] = (
+                f"Gedeeltelijk bullish: {bullish_h}/{n_pairs_h} highs, {bullish_l}/{n_pairs_l} lows stijgend "
+                f"— zwakke opwaartse structuur (HH ${last_hh['price']:,.0f}, HL ${last_hl['price']:,.0f})"
+            )
+        elif bearish_score > bullish_score and bearish_h >= 1 and bearish_l >= 1:
+            result["trend"] = "ZWAKKE_DOWNTREND"
+            result["last_ll"] = last_hl
+            result["last_lh"] = last_hh
+            result["reasoning"] = (
+                f"Gedeeltelijk bearish: {bearish_h}/{n_pairs_h} highs, {bearish_l}/{n_pairs_l} lows dalend "
+                f"— zwakke neerwaartse structuur (LH ${last_hh['price']:,.0f}, LL ${last_hl['price']:,.0f})"
+            )
     else:
         prev_h = recent_highs[-2]["price"] if len(recent_highs) >= 2 else "?"
         prev_l = recent_lows[-2]["price"] if len(recent_lows) >= 2 else "?"
@@ -182,6 +206,15 @@ def detect(df: pd.DataFrame, timeframe: str, n: int = 3, lookback: int = 3) -> d
     swing_lows = find_swing_lows(df, n=n)
     trend_info = classify_trend(swing_highs, swing_lows, lookback=lookback)
     bos = detect_break_of_structure(df, swing_highs, swing_lows)
+
+    # BOS upgrade: een recente BOS in dezelfde richting upgradet zwakke trend naar volledige trend
+    if bos is not None:
+        if trend_info["trend"] == "ZWAKKE_UPTREND" and bos["richting"] == "BULLISH":
+            trend_info["trend"] = "UPTREND"
+            trend_info["reasoning"] += f" — bevestigd door BOS BULLISH op {bos['timestamp'][:10]}"
+        elif trend_info["trend"] == "ZWAKKE_DOWNTREND" and bos["richting"] == "BEARISH":
+            trend_info["trend"] = "DOWNTREND"
+            trend_info["reasoning"] += f" — bevestigd door BOS BEARISH op {bos['timestamp'][:10]}"
 
     return {
         "timeframe": timeframe,

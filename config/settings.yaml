@@ -4,7 +4,7 @@ strategy:
   equal_tolerance: 0.0015       # 0.15% tolerantie voor equal highs/lows
   impulse_min_body_pct: 0.60    # minimale body/range ratio voor impuls candle
   impulse_min_move_pct: 0.003   # minimale prijsbeweging voor impuls (0.3%)
-  impulse_volume_multiplier: 1.5 # volume moet X keer boven 20-periode gemiddelde zijn
+  impulse_volume_multiplier: 1.2 # volume moet X keer boven 20-periode gemiddelde zijn
   zone_proximity_pct: 0.02      # max afstand van zone voor "nadert" status (2%)
   momentum_strong_body_pct: 0.60
   momentum_weak_body_pct: 0.30
