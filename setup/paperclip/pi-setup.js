@@ -90,7 +90,7 @@ Wekelijks (donderdag 20:00) of direct bij een noodrem trigger.
 
 ## Regels
 - Verander NOOIT risk management of Hyperliquid API integratie zonder opdracht
-- Push ALTIJD naar dev branch, NOOIT naar main
+- Push ALTIJD naar dev branch, NOOIT naar main — main is uitsluitend voor de Board Advisor na goedkeuring
 - Na push: maak taak aan voor Test Agent met daarin de nieuwe versie (bijv. "Test versie 0.2.0")`,
   },
   {
@@ -134,8 +134,10 @@ Schrijf testrapport naar: trading-company/reports/test/YYYY-MM-DD-test-vN.md
 Vermeld per stap: resultaat, eventuele fouten, en eindoordeel PASS of FAIL.
 
 ## Regels
+- Pas NIETS aan in de codebase, ConfigMaps, Kubernetes resources of pods — alleen lezen en testen
+- Het enige dat je uitvoert is deploy-version.sh en kubectl wait — geen restarts, geen patches, geen kubectl apply anders
 - Bij ELKE technische fout of FAIL: direct taak aanmaken voor Develop Agent met foutdetails, nooit doorgaan naar Board Advisor
-- Na volledig PASS: maak taak aan voor Board Advisor`,
+- Na volledig PASS: maak direct taak aan voor Board Advisor met versienummer en link naar testrapport`,
   },
   {
     name: 'Board Advisor',
@@ -155,10 +157,15 @@ Vermeld per stap: resultaat, eventuele fouten, en eindoordeel PASS of FAIL.
 - Slechte backtest: terug naar Tactiek Agent
 - Verkeerde analyse: terug naar Review Agent
 
+## Na goedkeuring van Niels
+Als Niels akkoord gaat (board approval):
+1. Merge dev naar main: git checkout main && git merge dev && git push origin main
+2. De nieuwe versie draait al als pod — geen extra deployment nodig
+
 ## Regels
 - Rapport leesbaar in 5 minuten
 - Altijd een CONCRETE aanbeveling: DEPLOY / RETRY / STOP
-- De board (Niels) heeft het laatste woord`,
+- De board (Niels) heeft het laatste woord — zonder zijn goedkeuring wordt er NOOIT naar main gepusht`,
   },
   {
     name: 'Risk Management Agent',
