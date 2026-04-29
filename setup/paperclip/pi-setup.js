@@ -109,16 +109,12 @@ Voer uit vanuit de hyperliquid-bot map:
   python -m pytest tests/ -v --tb=short
 Bij fouten: schrijf foutrapport naar trading-company/reports/test/YYYY-MM-DD-unittest-fail.md en maak direct een taak aan voor Develop Agent. Stop hier.
 
-### Stap 3 — Wacht op image
-Wacht tot GH Actions de image gebouwd heeft (maximaal 15 minuten).
-Controleer periodiek via: curl -s https://ghcr.io/v2/njwgroeneveld/hyperliquid-bot/tags/list
-Zodra tag v{VERSION} beschikbaar is, ga door naar stap 4.
-
-### Stap 4 — Deploy nieuwe versie
+### Stap 3 — Deploy nieuwe versie en wacht tot pod draait
 Voer uit: bash hyperliquid-bot/scripts/deploy-version.sh
-Wacht tot pod Running is:
-  kubectl wait --for=condition=ready pod -l version=v{VERSION} -n trading --timeout=120s
-Bij fout: foutrapport en terug naar Develop Agent.
+Wacht daarna tot de pod daadwerkelijk Running is (image pull kan 20 minuten duren):
+  kubectl wait --for=condition=ready pod -l version=v{VERSION} -n trading --timeout=1200s
+Kubernetes herprobeert de image pull automatisch totdat GH Actions klaar is.
+Bij timeout of fout: foutrapport en terug naar Develop Agent.
 
 ### Stap 5 — Smoke test op pod
 Start port-forward: kubectl port-forward -n trading deployment/hyperliquid-bot-v{VERSION_SLUG} 18080:8080 &
