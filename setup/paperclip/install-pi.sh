@@ -147,6 +147,7 @@ mkdir -p "$REPO_ROOT/trading-company/reports/develop"
 mkdir -p "$REPO_ROOT/trading-company/reports/test"
 mkdir -p "$REPO_ROOT/trading-company/reports/board"
 mkdir -p "$REPO_ROOT/trading-company/reports/risk"
+mkdir -p "$REPO_ROOT/trading-company/reports/process"
 log "Reports directories aangemaakt"
 
 # -----------------------------------------------------------------------------
