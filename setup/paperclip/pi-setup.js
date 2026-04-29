@@ -112,7 +112,7 @@ Bij fouten: schrijf foutrapport naar trading-company/reports/test/YYYY-MM-DD-uni
 ### Stap 3 — Deploy nieuwe versie en wacht tot pod draait
 Voer uit: bash hyperliquid-bot/scripts/deploy-version.sh
 Wacht daarna tot de pod daadwerkelijk Running is (image pull kan 20 minuten duren):
-  kubectl wait --for=condition=ready pod -l version=v{VERSION} -n trading --timeout=1200s
+  kubectl wait --for=condition=ready pod -l version=v{VERSION} -n trading --timeout=600s
 Kubernetes herprobeert de image pull automatisch totdat GH Actions klaar is.
 Bij timeout of fout: foutrapport en terug naar Develop Agent.
 
