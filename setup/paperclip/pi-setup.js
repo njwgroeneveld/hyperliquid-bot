@@ -251,12 +251,12 @@ async function main() {
   for (const agent of AGENTS) {
     const found = existing.find(a => a.name === agent.name);
     if (found) {
-      await api('PATCH', `/agents/${found.id}`, { instructions: agent.instructions, title: agent.title });
+      await api('PATCH', `/agents/${found.id}`, { capabilities: agent.instructions, title: agent.title });
       createdAgents[agent.name] = found.id;
       console.log(`✅ Bijgewerkt: ${agent.name}`);
     } else {
       const created = await api('POST', `/companies/${CID}/agents`, {
-        name: agent.name, title: agent.title, role: agent.role, instructions: agent.instructions,
+        name: agent.name, title: agent.title, role: agent.role, capabilities: agent.instructions,
       });
       createdAgents[agent.name] = created.id;
       console.log(`✅ Aangemaakt: ${agent.name}`);
