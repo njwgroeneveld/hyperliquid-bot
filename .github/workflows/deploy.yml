@@ -2,7 +2,7 @@ name: Build & Push
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   build:
@@ -14,6 +14,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Read version
+        id: version
+        run: echo "VERSION=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -34,4 +38,6 @@ jobs:
           context: .
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: |
+            ghcr.io/${{ github.repository }}:v${{ steps.version.outputs.VERSION }}
+            ${{ github.ref_name == 'main' && format('ghcr.io/{0}:latest', github.repository) || '' }}
