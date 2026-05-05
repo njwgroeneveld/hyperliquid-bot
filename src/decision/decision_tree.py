@@ -144,12 +144,13 @@ def _stap_2_zone(detection: dict, richting: str, proximity_pct: float = 0.02) ->
         }
 
 
-def _stap_3_imbalance(detection: dict, richting: str, zone: dict | None) -> dict:
+def _stap_3_imbalance(detection: dict, richting: str, zone: dict | None, zone_binnen_bereik: bool = True) -> dict:
     """
     Stap 3: Is de weg naar de zone vrij van open imbalances?
 
     Voor LONG: zijn er open imbalances TUSSEN huidige prijs en de demand zone?
-    Als ja → prijs moet die imbalance eerst vullen → wachten (HARD VETO).
+    Hard VETO alleen als zone al binnen bereik is (stap 2 GROEN).
+    Als zone nog ver weg is (stap 2 GEEL): blokkerende imbalances geven GEEL — score aftrek, geen stop.
     """
     prijs = detection.get("huidige_prijs", 0)
     imb_1h = detection.get("imbalances_1h", {})
@@ -178,15 +179,25 @@ def _stap_3_imbalance(detection: dict, richting: str, zone: dict | None) -> dict
         ]
 
     if blocking:
+        imb_omschrijving = ", ".join(f"${i['laag']:,.0f}–${i['hoog']:,.0f}" for i in blocking)
+        if zone_binnen_bereik:
+            return {
+                "stap": 3, "naam": "Imbalance check",
+                "resultaat": RESULTAAT_VETO,
+                "blokkerende_imbalances": blocking,
+                "bewijs": (
+                    f"{len(blocking)} open imbalance(s) blokkeert pad naar zone: {imb_omschrijving}"
+                ),
+                "veto": True,
+            }
         return {
             "stap": 3, "naam": "Imbalance check",
-            "resultaat": RESULTAAT_VETO,
+            "resultaat": RESULTAAT_GEEL,
             "blokkerende_imbalances": blocking,
             "bewijs": (
-                f"{len(blocking)} open imbalance(s) blokkeert pad naar zone: "
-                + ", ".join(f"${i['laag']:,.0f}–${i['hoog']:,.0f}" for i in blocking)
+                f"{len(blocking)} open imbalance(s) op pad naar zone (zone nog buiten bereik): {imb_omschrijving}"
             ),
-            "veto": True,
+            "veto": False,
         }
 
     return {
@@ -542,7 +553,8 @@ def evaluate(detection: dict, settings: dict) -> dict:
                              BESLISSING_GEEN_TRADE, "Geen geldige zone", _score(stappen), 7)
 
     # Stap 3 — Imbalance
-    s3 = _stap_3_imbalance(detection, richting, geselecteerde_zone)
+    zone_binnen_bereik = s2["resultaat"] == RESULTAAT_GROEN
+    s3 = _stap_3_imbalance(detection, richting, geselecteerde_zone, zone_binnen_bereik)
     stappen.append(s3)
     if s3["veto"]:
         veto_reden = s3["bewijs"]
