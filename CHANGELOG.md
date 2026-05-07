@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.3.0 — 2026-05-07
+
+### Tactische wijzigingen (op basis van Tactiek Paper v2 2026-05-07)
+
+- **Wijziging 1 — Imbalance grootte-drempel**: Micro-imbalances (<0.15% van prijs, gelijk aan
+  `equal_tolerance`) geven nu GEEL in plaats van hard VETO in stap 3. Grote imbalances
+  (≥0.15%) blijven een harde VETO als de zone binnen bereik is. Nieuwe parameter:
+  `imbalance_min_size_pct: 0.0015` in `config/settings.yaml`.
+- **Wijziging 2 — Zone nabijheid 2% → 3%**: `zone_proximity_pct` verhoogd van 0.02 naar 0.03.
+  HYPE op 2.3% van zone is nu bereikbaar. Enkelvoudige parameterwijziging.
+
+### Verwacht effect
+
+1-3 trades/week (was 0 in 8 dagen bij v0.2.0). TAO heeft meeste kans door veel micro-imbalances;
+HYPE profiteert direct van de ruimere zone-drempel.
+
 ## v0.2.0 — 2026-04-29
 
 ### Tactische wijzigingen (op basis van Tactiek Paper 2026-04-26)

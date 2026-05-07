@@ -144,13 +144,15 @@ def _stap_2_zone(detection: dict, richting: str, proximity_pct: float = 0.02) ->
         }
 
 
-def _stap_3_imbalance(detection: dict, richting: str, zone: dict | None, zone_binnen_bereik: bool = True) -> dict:
+def _stap_3_imbalance(
+    detection: dict, richting: str, zone: dict | None,
+    zone_binnen_bereik: bool = True, min_size_pct: float = 0.0015,
+) -> dict:
     """
     Stap 3: Is de weg naar de zone vrij van open imbalances?
 
-    Voor LONG: zijn er open imbalances TUSSEN huidige prijs en de demand zone?
-    Hard VETO alleen als zone al binnen bereik is (stap 2 GROEN).
-    Als zone nog ver weg is (stap 2 GEEL): blokkerende imbalances geven GEEL — score aftrek, geen stop.
+    Hard VETO alleen als zone binnen bereik is (stap 2 GROEN) EN imbalance groot genoeg is.
+    Micro-imbalances (<min_size_pct * prijs) degraderen van VETO naar GEEL.
     """
     prijs = detection.get("huidige_prijs", 0)
     imb_1h = detection.get("imbalances_1h", {})
@@ -178,32 +180,44 @@ def _stap_3_imbalance(detection: dict, richting: str, zone: dict | None, zone_bi
             if imb["hoog"] <= zone_midden and imb["laag"] >= prijs
         ]
 
-    if blocking:
-        imb_omschrijving = ", ".join(f"${i['laag']:,.0f}–${i['hoog']:,.0f}" for i in blocking)
-        if zone_binnen_bereik:
-            return {
-                "stap": 3, "naam": "Imbalance check",
-                "resultaat": RESULTAAT_VETO,
-                "blokkerende_imbalances": blocking,
-                "bewijs": (
-                    f"{len(blocking)} open imbalance(s) blokkeert pad naar zone: {imb_omschrijving}"
-                ),
-                "veto": True,
-            }
+    if not blocking:
         return {
             "stap": 3, "naam": "Imbalance check",
-            "resultaat": RESULTAAT_GEEL,
-            "blokkerende_imbalances": blocking,
-            "bewijs": (
-                f"{len(blocking)} open imbalance(s) op pad naar zone (zone nog buiten bereik): {imb_omschrijving}"
-            ),
+            "resultaat": RESULTAAT_GROEN,
+            "bewijs": "Geen blokkerende imbalances — pad naar zone is vrij",
             "veto": False,
         }
 
+    imb_omschrijving = ", ".join(f"${i['laag']:,.0f}–${i['hoog']:,.0f}" for i in blocking)
+
+    # Splits op grootte: micro-imbalances hebben geen significante magnetische aantrekkingskracht
+    min_size = prijs * min_size_pct
+    grote_imbs = [imb for imb in blocking if (imb["hoog"] - imb["laag"]) >= min_size]
+    micro_imbs = [imb for imb in blocking if (imb["hoog"] - imb["laag"]) < min_size]
+
+    # Grote imbalances binnen bereik: harde VETO
+    if grote_imbs and zone_binnen_bereik:
+        return {
+            "stap": 3, "naam": "Imbalance check",
+            "resultaat": RESULTAAT_VETO,
+            "blokkerende_imbalances": blocking,
+            "bewijs": (
+                f"{len(grote_imbs)} significante imbalance(s) blokkeert pad naar zone: {imb_omschrijving}"
+            ),
+            "veto": True,
+        }
+
+    # Alleen micro-imbalances of zone buiten bereik: GEEL — score aftrek, geen stop
+    if not grote_imbs:
+        reden = f"{len(micro_imbs)} micro-imbalance(s) op pad (<{min_size_pct*100:.2f}% range): {imb_omschrijving} — score aftrek, geen veto"
+    else:
+        reden = f"{len(blocking)} imbalance(s) op pad (zone buiten bereik): {imb_omschrijving}"
+
     return {
         "stap": 3, "naam": "Imbalance check",
-        "resultaat": RESULTAAT_GROEN,
-        "bewijs": "Geen blokkerende imbalances — pad naar zone is vrij",
+        "resultaat": RESULTAAT_GEEL,
+        "blokkerende_imbalances": blocking,
+        "bewijs": reden,
         "veto": False,
     }
 
@@ -527,6 +541,7 @@ def evaluate(detection: dict, settings: dict) -> dict:
         }
     """
     proximity_pct = settings["strategy"]["zone_proximity_pct"]
+    min_size_pct = settings["strategy"].get("imbalance_min_size_pct", 0.0015)
     coin = detection.get("coin", "?")
     timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -554,7 +569,7 @@ def evaluate(detection: dict, settings: dict) -> dict:
 
     # Stap 3 — Imbalance
     zone_binnen_bereik = s2["resultaat"] == RESULTAAT_GROEN
-    s3 = _stap_3_imbalance(detection, richting, geselecteerde_zone, zone_binnen_bereik)
+    s3 = _stap_3_imbalance(detection, richting, geselecteerde_zone, zone_binnen_bereik, min_size_pct)
     stappen.append(s3)
     if s3["veto"]:
         veto_reden = s3["bewijs"]
